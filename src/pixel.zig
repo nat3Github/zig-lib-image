@@ -48,6 +48,7 @@ pub const Pixel = extern struct {
         const r, const g, const b = rgb;
         return Pixel{ .r = r, .g = g, .b = b, .a = 255 };
     }
+
     pub fn init_from_rgba_tuple(rgba: struct { u8, u8, u8, u8 }) Pixel {
         const r, const g, const b, const a = rgba;
         return Pixel{ .r = r, .g = g, .b = b, .a = a };
@@ -68,6 +69,21 @@ pub const Pixel = extern struct {
         rgba[3] = self.a;
         return rgba;
     }
+    pub fn to_rgba_tuple(self: *const Pixel) struct { u8, u8, u8, u8 } {
+        return .{
+            self.r,
+            self.g,
+            self.b,
+            self.a,
+        };
+    }
+    pub fn to_rgb_tuple(self: *const Pixel) struct { u8, u8, u8 } {
+        return .{
+            self.r,
+            self.g,
+            self.b,
+        };
+    }
     pub fn multiply_color_aliasing(color: [3]u8, multiplier: f32) [3]u8 {
         const clamp = std.math.clamp;
         var res: [3]u8 = undefined;
@@ -76,6 +92,24 @@ pub const Pixel = extern struct {
             res[i] = @intCast(clamp(f, 0, 255));
         }
         return res;
+    }
+    fn to_bw(color: struct { u8, u8, u8 }, contrast: f32) u8 {
+        const r, const b, const g = color;
+        const luminance: f32 = @as(f32, @floatFromInt(r)) * 0.299 + @as(f32, @floatFromInt(g)) * 0.587 + @as(f32, @floatFromInt(b)) * 0.114;
+        var normalized = luminance / 255.0;
+        normalized = (normalized - 0.5) * contrast + 0.5;
+        normalized = std.math.clamp(normalized, 0.0, 1.0);
+        const bw: u8 = @intFromFloat(normalized * 255.0);
+        return bw;
+    }
+    fn to_gray_pixel(Self: Pixel) Pixel {
+        const bw = to_bw(Self.to_rgb_tuple(), 1);
+        return Pixel{
+            .r = bw,
+            .g = bw,
+            .b = bw,
+            .a = Self.a,
+        };
     }
 
     pub fn grayscale_from_value(value: f32) [3]u8 {
