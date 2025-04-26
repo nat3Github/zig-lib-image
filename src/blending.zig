@@ -134,6 +134,25 @@ test "blend non premultiplied" {
     try expect(Pixel.eql(result2, Pixel.init_rgba(128, 0, 127, 255)));
 }
 
+pub fn blend_runtime(px: Pixel, wpx: Pixel, blendmode: BlendMode, alpha_comp: AlphaCompositing) Pixel {
+    return switch (blendmode) {
+        .override => px.blend(wpx, .override, alpha_comp),
+        .darken => px.blend(wpx, .darken, alpha_comp),
+        .lighten => px.blend(wpx, .lighten, alpha_comp),
+        .screen => px.blend(wpx, .screen, alpha_comp),
+        .linear_burn => px.blend(wpx, .linear_burn, alpha_comp),
+        .color_burn => px.blend(wpx, .color_burn, alpha_comp),
+        .multiply => px.blend(wpx, .multiply, alpha_comp),
+        .color_dodge => px.blend(wpx, .color_dodge, alpha_comp),
+        .linear_dodge => px.blend(wpx, .linear_dodge, alpha_comp),
+        .blend_overlay => px.blend(wpx, .blend_overlay, alpha_comp),
+        .soft_light => px.blend(wpx, .soft_light, alpha_comp),
+        .hard_light => px.blend(wpx, .hard_light, alpha_comp),
+        .difference => px.blend(wpx, .difference, alpha_comp),
+        .exclusion => px.blend(wpx, .exclusion, alpha_comp),
+    };
+}
+
 pub const BlendMode = enum(u8) {
     /// Normal blend (top pixel simply overrides bottom pixel)
     override = 0,

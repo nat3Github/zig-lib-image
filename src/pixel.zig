@@ -37,6 +37,14 @@ pub const Pixel = extern struct {
     ) Pixel {
         return Blending.blend(base, other, blend_mode, alpha_compositing);
     }
+    pub fn blend_runtime(
+        base: Pixel,
+        other: Pixel,
+        blend_mode: BlendMode,
+        comptime alpha_compositing: AlphaCompositing,
+    ) Pixel {
+        return Blending.blend_runtime(base, other, blend_mode, alpha_compositing);
+    }
     pub fn init_from_u8_slice(rgba: []const u8) Pixel {
         assert(rgba.len >= 3);
         assert(rgba.len <= 4);
