@@ -12,19 +12,22 @@ pub const Pixel = extern struct {
     b: u8 = 0,
     a: u8 = 255,
 
-    pub const Transparent = init(0, 0, 0, 0);
-    pub const White = init(255, 255, 255);
-    pub const Gray = init(200, 200, 200);
-    pub const Black = init(0, 0, 0);
-    pub const Red = init(255, 0, 0);
-    pub const Green = init(0, 255, 0);
-    pub const Blue = init(0, 0, 255);
+    pub const Transparent = init_rgba(0, 0, 0, 0);
+    pub const White = init_rgb(255, 255, 255);
+    pub const Gray = init_rgb(200, 200, 200);
+    pub const Black = init_rgb(0, 0, 0);
+    pub const Red = init_rgb(255, 0, 0);
+    pub const Green = init_rgb(0, 255, 0);
+    pub const Blue = init_rgb(0, 0, 255);
 
-    pub fn init(r: u8, g: u8, b: u8, a: u8) Pixel {
+    pub fn init_rgba(r: u8, g: u8, b: u8, a: u8) Pixel {
         return .init_from_rgba_tuple(.{ r, g, b, a });
     }
+    pub fn init_rgb(r: u8, g: u8, b: u8) Pixel {
+        return .init_from_rgb_tuple(.{ r, g, b });
+    }
     pub fn eql(a: Pixel, b: Pixel) bool {
-        std.mem.eql(u8, a.to_rgba_arr(), b.to_rgba_arr());
+        return std.mem.eql(u8, &a.to_rgba_arr(), &b.to_rgba_arr());
     }
     pub fn blend(
         base: Pixel,
@@ -160,4 +163,9 @@ test "test Pixel" {
 pub fn size_of_pixel() comptime_int {
     if (comptime @sizeOf(Pixel) != 4) @compileError("size of extern struct Pixel with 4 u8 is expected to be 4");
     return 4;
+}
+test "test all" {
+    _ = .{
+        Blending,
+    };
 }

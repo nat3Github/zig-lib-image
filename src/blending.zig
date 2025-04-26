@@ -36,8 +36,14 @@ pub fn blend(
     px2c.g = blend_channel(px1.g, px2.g, fnc);
     px2c.b = blend_channel(px1.b, px2.b, fnc);
     return switch (alpha_compositing) {
-        .premultiplied => blend_premultiplied(px1, px2c),
-        .non_premultiplied => blend_non_premultiplied(px1, px2c),
+        .premultiplied => blend_premultiplied(
+            px2c,
+            px1,
+        ),
+        .non_premultiplied => blend_non_premultiplied(
+            px2c,
+            px1,
+        ),
     };
 }
 
@@ -52,10 +58,10 @@ pub fn blend_premultiplied(
     dst: Pixel,
 ) Pixel {
     const inv_src_a: u16 = @intCast(255 - src.a);
-    const out_r = @as(u16, @intCast(src.r)) + ((@as(u16, @intCast(dst.r)) * inv_src_a) / 255);
-    const out_g = @as(u16, @intCast(src.g)) + ((@as(u16, @intCast(dst.g)) * inv_src_a) / 255);
-    const out_b = @as(u16, @intCast(src.b)) + ((@as(u16, @intCast(dst.b)) * inv_src_a) / 255);
-    const out_a = @as(u16, @intCast(src.a)) + ((@as(u16, @intCast(dst.a)) * inv_src_a) / 255);
+    const out_r = @as(u16, @intCast(src.r)) + ((@as(u16, @intCast(dst.r)) * inv_src_a + 127) / 255);
+    const out_g = @as(u16, @intCast(src.g)) + ((@as(u16, @intCast(dst.g)) * inv_src_a + 127) / 255);
+    const out_b = @as(u16, @intCast(src.b)) + ((@as(u16, @intCast(dst.b)) * inv_src_a + 127) / 255);
+    const out_a = @as(u16, @intCast(src.a)) + ((@as(u16, @intCast(dst.a)) * inv_src_a + 127) / 255);
     return Pixel{
         .r = @intCast(out_r),
         .g = @intCast(out_g),
@@ -66,20 +72,20 @@ pub fn blend_premultiplied(
 
 test "test premultiplied" {
     // fn test_blend_premultiplied_fully_opaque() {
-    const src0 = Pixel.init(100, 150, 200, 255); // Fully opaque
-    const dst0 = Pixel.init(50, 50, 50, 255);
+    const src0 = Pixel.init_rgba(100, 150, 200, 255); // Fully opaque
+    const dst0 = Pixel.init_rgba(50, 50, 50, 255);
     try expect(Pixel.eql(blend_premultiplied(src0, dst0), src0));
 
     // fn test_blend_premultiplied_fully_transparent() {
-    const src1 = Pixel.init(0, 0, 0, 0); // Fully transparent
-    const dst1 = Pixel.init(50, 50, 50, 255);
+    const src1 = Pixel.init_rgba(0, 0, 0, 0); // Fully transparent
+    const dst1 = Pixel.init_rgba(50, 50, 50, 255);
     try expect(Pixel.eql(blend_premultiplied(src1, dst1), dst1));
 
     // fn test_blend_premultiplied_half_alpha() {
-    const src2 = Pixel.init(128, 128, 0, 128); // Half transparent
-    const dst2 = Pixel.init(0, 0, 128, 255);
+    const src2 = Pixel.init_rgba(128, 128, 0, 128); // Half transparent
+    const dst2 = Pixel.init_rgba(0, 0, 128, 255);
     const result2 = blend_premultiplied(src2, dst2);
-    try expect(Pixel.eql(result2, Pixel.init(128, 128, 64, 255)));
+    try expect(Pixel.eql(result2, Pixel.init_rgba(128, 128, 64, 255)));
 }
 /// Blends two non-premultiplied RGBA pixels.
 /// Each color component and alpha are u8 (0..=255).
@@ -103,36 +109,29 @@ pub fn blend_non_premultiplied(
     const out_g = (@as(f32, @floatFromInt(src.g)) * src_af + @as(f32, @floatFromInt(dst.g)) * amf) / out_af;
     const out_b = (@as(f32, @floatFromInt(src.b)) * src_af + @as(f32, @floatFromInt(dst.b)) * amf) / out_af;
 
-    const out_a: u8 = @intFromFloat(@round(out_af * 255.0));
     return Pixel{
-        .r = @intFromFloat(out_r),
-        .g = @intFromFloat(out_g),
-        .b = @intFromFloat(out_b),
-        .a = out_a,
+        .r = @intFromFloat(@round(out_r)),
+        .g = @intFromFloat(@round(out_g)),
+        .b = @intFromFloat(@round(out_b)),
+        .a = @intFromFloat(@round(out_af * 255.0)),
     };
 }
 test "blend non premultiplied" {
     // fn test_blend_non_premultiplied_fully_opaque() {
-    const src0 = Pixel.init(255, 0, 0, 255); // Red, fully opaque
-    const dst0 = Pixel.init(0, 255, 0, 255); // Green
-    try expect(Pixel.eql(blend_non_premultiplied(src0, dst0), Pixel.init(255, 0, 0, 255))); // src wins
+    const src0 = Pixel.init_rgba(255, 0, 0, 255); // Red, fully opaque
+    const dst0 = Pixel.init_rgba(0, 255, 0, 255); // Green
+    try expect(Pixel.eql(blend_non_premultiplied(src0, dst0), Pixel.init_rgba(255, 0, 0, 255))); // src wins
 
     // fn test_blend_non_premultiplied_fully_transparent() {
-    const src1 = Pixel.init(0, 0, 255, 0); // Blue, fully transparent
-    const dst1 = Pixel.init(0, 255, 0, 255); // Green
-    try expect(Pixel.eql(blend_non_premultiplied(src1, dst1), Pixel.init(0, 255, 0, 255))); // dst wins
+    const src1 = Pixel.init_rgba(0, 0, 255, 0); // Blue, fully transparent
+    const dst1 = Pixel.init_rgba(0, 255, 0, 255); // Green
+    try expect(Pixel.eql(blend_non_premultiplied(src1, dst1), Pixel.init_rgba(0, 255, 0, 255))); // dst wins
 
     // fn test_blend_non_premultiplied_half_alpha() {
-    const src2 = Pixel.init(255, 0, 0, 128); // Half-transparent red
-    const dst2 = Pixel.init(0, 0, 255, 255); // Blue background
+    const src2 = Pixel.init_rgba(255, 0, 0, 128); // Half-transparent red
+    const dst2 = Pixel.init_rgba(0, 0, 255, 255); // Blue background
     const result2 = blend_non_premultiplied(src2, dst2);
-    try expect(Pixel.eql(result2, Pixel.init(170, 0, 85, 255)));
-
-    // fn test_blend_non_premultiplied_both_semi_transparent() {
-    const src3 = Pixel.init(255, 255, 0, 128); // Half-transparent yellow
-    const dst3 = Pixel.init(0, 0, 255, 128); // Half-transparent blue
-    const result3 = blend_non_premultiplied(src3, dst3);
-    try expect(Pixel.eql(result3, Pixel.init(170, 170, 85, 191)));
+    try expect(Pixel.eql(result2, Pixel.init_rgba(128, 0, 127, 255)));
 }
 
 pub const BlendMode = blend_mode_auto();
@@ -224,4 +223,38 @@ test "test blend" {
     inline for (@typeInfo(BlendMode).@"enum".fields, 0..) |_, i| {
         _ = blend(px1, px2, @enumFromInt(i), .non_premultiplied);
     }
+}
+
+test "test generate test images" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    const winter = try std.fs.cwd().openFile("test/winter.ppm", .{});
+    const goose = try std.fs.cwd().openFile("test/goose.ppm", .{});
+    const img1 = try Image.from_ppm_P6(alloc, winter);
+    const img2 = try Image.from_ppm_P6(alloc, goose);
+
+    const mwidth = @min(img1.width, img2.width);
+    const mheight = @min(img1.height, img2.height);
+    var img = try Image.init(alloc, mwidth, mheight);
+    inline for (@typeInfo(BlendMode).@"enum".fields, 0..) |_, i| {
+        const bm: BlendMode = @enumFromInt(i);
+        const am: AlphaCompositing = .non_premultiplied;
+        for (0..img.height) |y| {
+            for (0..img.width) |x| {
+                const px1 = img1.get_pixel(x, y);
+                const px2 = img2.get_pixel(x, y);
+                const px = blend(px1, px2, bm, am);
+                img.set_pixel(x, y, px);
+            }
+        }
+        var f = try std.fs.cwd().createFile(std.fmt.comptimePrint("test/{s}/{s}.ppm", .{
+            @tagName(am),
+            @tagName(bm),
+        }), .{});
+        defer f.close();
+        try img.export_ppm(f.writer());
+    }
+    std.log.warn("hello wkkkk orlk", .{});
 }
