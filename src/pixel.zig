@@ -2,11 +2,11 @@ const std = @import("std");
 const fs = std.fs;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
-pub const Blending = @import("blending.zig");
-pub const BlendMode = Blending.BlendMode;
-pub const AlphaCompositing = Blending.AlphaCompositing;
 
 pub const Pixel = extern struct {
+    pub const Blending = @import("blending.zig");
+    pub const BlendMode = Blending.BlendMode;
+    pub const AlphaCompositing = Blending.AlphaCompositing;
     r: u8 = 0,
     g: u8 = 0,
     b: u8 = 0,

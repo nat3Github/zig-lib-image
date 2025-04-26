@@ -12,6 +12,10 @@ pub fn squeze_into_range(val: f32, lower: f32, upper: f32) f32 {
     return val * dif + lower;
 }
 pub const Pixel = @import("pixel.zig").Pixel;
+pub const Blending = @import("blending.zig");
+pub const BlendMode = Blending.BlendMode;
+pub const AlphaCompositing = Blending.AlphaCompositing;
+
 pub const Image = @This();
 const sizeOfPixel = @import("pixel.zig").size_of_pixel();
 offset_x: usize = 0,
