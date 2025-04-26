@@ -134,7 +134,7 @@ test "blend non premultiplied" {
     try expect(Pixel.eql(result2, Pixel.init_rgba(128, 0, 127, 255)));
 }
 
-pub fn blend_runtime(px: Pixel, wpx: Pixel, blendmode: BlendMode, alpha_comp: AlphaCompositing) Pixel {
+pub fn blend_runtime(px: Pixel, wpx: Pixel, blendmode: BlendMode, comptime alpha_comp: AlphaCompositing) Pixel {
     return switch (blendmode) {
         .override => px.blend(wpx, .override, alpha_comp),
         .darken => px.blend(wpx, .darken, alpha_comp),
