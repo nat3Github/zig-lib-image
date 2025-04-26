@@ -145,6 +145,6 @@ test "test Pixel" {
     try expect(meta_eql(Pixel.White, white_from_hsl));
 }
 pub fn size_of_pixel() comptime_int {
-    if (comptime @sizeOf(@This()) != 4) @compileError("size of extern struct Pixel with 4 u8 is expected to be 4");
+    if (comptime @sizeOf(Pixel) != 4) @compileError("size of extern struct Pixel with 4 u8 is expected to be 4");
     return 4;
 }
