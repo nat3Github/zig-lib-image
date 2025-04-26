@@ -2,21 +2,38 @@ const std = @import("std");
 const fs = std.fs;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
+pub const Blending = @import("blending.zig");
+pub const BlendMode = Blending.BlendMode;
+pub const AlphaCompositing = Blending.AlphaCompositing;
 
 pub const Pixel = extern struct {
-    r: u8,
-    g: u8,
-    b: u8,
+    r: u8 = 0,
+    g: u8 = 0,
+    b: u8 = 0,
     a: u8 = 255,
 
-    pub const Transparent = Pixel.init_from_u8_slice(&.{ 0, 0, 0, 0 });
-    pub const White = Pixel.init_from_u8_slice(&.{ 255, 255, 255 });
-    pub const Gray = Pixel.init_from_u8_slice(&.{ 200, 200, 200 });
-    pub const Black = Pixel.init_from_u8_slice(&.{ 0, 0, 0 });
-    pub const Red = Pixel.init_from_u8_slice(&.{ 255, 0, 0 });
-    pub const Green = Pixel.init_from_u8_slice(&.{ 0, 255, 0 });
-    pub const Blue = Pixel.init_from_u8_slice(&.{ 0, 0, 255 });
+    pub const Transparent = init(0, 0, 0, 0);
+    pub const White = init(255, 255, 255);
+    pub const Gray = init(200, 200, 200);
+    pub const Black = init(0, 0, 0);
+    pub const Red = init(255, 0, 0);
+    pub const Green = init(0, 255, 0);
+    pub const Blue = init(0, 0, 255);
 
+    pub fn init(r: u8, g: u8, b: u8, a: u8) Pixel {
+        return .init_from_rgba_tuple(.{ r, g, b, a });
+    }
+    pub fn eql(a: Pixel, b: Pixel) bool {
+        std.mem.eql(u8, a.to_rgba_arr(), b.to_rgba_arr());
+    }
+    pub fn blend(
+        base: Pixel,
+        other: Pixel,
+        comptime blend_mode: BlendMode,
+        comptime alpha_compositing: AlphaCompositing,
+    ) Pixel {
+        return Blending.blend(base, other, blend_mode, alpha_compositing);
+    }
     pub fn init_from_u8_slice(rgba: []const u8) Pixel {
         assert(rgba.len >= 3);
         assert(rgba.len <= 4);
@@ -48,8 +65,8 @@ pub const Pixel = extern struct {
         rgba[3] = self.a;
         return rgba;
     }
-    const clamp = std.math.clamp;
     pub fn multiply_color_aliasing(color: [3]u8, multiplier: f32) [3]u8 {
+        const clamp = std.math.clamp;
         var res: [3]u8 = undefined;
         for (color, 0..) |c, i| {
             const f = @as(f32, @floatFromInt(c)) * multiplier;
@@ -65,26 +82,18 @@ pub const Pixel = extern struct {
 
     pub fn rgb_to_hsl(rgb_color: []const u8) [3]f32 {
         assert(rgb_color.len <= 4);
-        // Normalize RGB values
         const r = @as(f32, @floatFromInt(rgb_color[0])) / 255.0;
         const g = @as(f32, @floatFromInt(rgb_color[1])) / 255.0;
         const b = @as(f32, @floatFromInt(rgb_color[2])) / 255.0;
 
-        // Find the maximum and minimum values of RGB
         const c_max = @max(r, @max(g, b));
         const c_min = @min(r, @min(g, b));
         const delta = c_max - c_min;
 
-        // Calculate hue
         const hue: f32 = if (delta == 0.0) 0.0 else if (c_max == r) 60.0 * @mod((g - b) / delta, 6.0) else if (c_max == g) 60.0 * ((b - r) / delta + 2.0) else 60.0 * ((r - g) / delta + 4.0);
 
-        // Ensure hue is within [0, 360)
         const normalized_hue = if (hue < 0.0) hue + 360.0 else hue;
-
-        // Calculate lightness
         const lightness = (c_max + c_min) / 2.0;
-
-        // Calculate saturation
         const saturation = if (delta == 0.0) 0.0 else delta / (1.0 - @abs(2.0 * lightness - 1.0));
 
         return .{ normalized_hue, saturation, lightness };
