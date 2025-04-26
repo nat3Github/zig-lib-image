@@ -134,35 +134,35 @@ test "blend non premultiplied" {
     try expect(Pixel.eql(result2, Pixel.init_rgba(128, 0, 127, 255)));
 }
 
-pub const BlendMode = enum {
+pub const BlendMode = enum(u8) {
     /// Normal blend (top pixel simply overrides bottom pixel)
-    override,
-    /// Darken blend (takes the darker pixel per channel)
-    darken,
-    /// Lighten blend (takes the lighter pixel per channel)
-    lighten,
-    /// Screen blend (inverse multiply for brighter look)
-    screen,
-    /// Linear Burn blend (adds base and blend and subtracts 1.0)
-    linear_burn,
-    /// Color Burn blend (darkens bottom depending on blend)
-    color_burn,
+    override = 0,
     /// Multiply blend (multiplies base and blend channels)
-    multiply,
-    /// Color Dodge blend (brightens based on blend color)
-    color_dodge,
-    /// Linear Dodge (Add) blend (simply adds pixel values)
-    liner_dodge,
-    /// Overlay blend (multiply or screen depending on base)
-    blend_overlay,
+    multiply = 1,
     /// Soft Light blend (gentle contrast depending on blend)
-    soft_light,
+    soft_light = 2,
     /// Hard Light blend (overlay but driven by blend)
-    hard_light,
+    hard_light = 3,
+    /// Darken blend (takes the darker pixel per channel)
+    darken = 4,
+    /// Lighten blend (takes the lighter pixel per channel)
+    lighten = 5,
+    /// Screen blend (inverse multiply for brighter look)
+    screen = 6,
+    /// Linear Burn blend (adds base and blend and subtracts 1.0)
+    linear_burn = 7,
+    /// Color Burn blend (darkens bottom depending on blend)
+    color_burn = 8,
+    /// Color Dodge blend (brightens based on blend color)
+    color_dodge = 9,
+    /// Linear Dodge (Add) blend (simply adds pixel values)
+    linear_dodge = 10,
+    /// Overlay blend (multiply or screen depending on base)
+    blend_overlay = 11,
     /// Difference blend (absolute difference between pixels)
-    difference,
+    difference = 12,
     /// Exclusion blend (lower contrast difference)
-    exclusion,
+    exclusion = 13,
 };
 
 pub const blend_mode_fn = struct {
@@ -199,7 +199,7 @@ pub const blend_mode_fn = struct {
         if (b == 1.0) return 1.0 else return @min(a / (1.0 - b), 1.0);
     }
     /// Linear Dodge (Add) blend (simply adds pixel values)
-    pub fn liner_dodge(a: f32, b: f32) f32 {
+    pub fn linear_dodge(a: f32, b: f32) f32 {
         return @min(a + b, 1.0);
     }
     /// Overlay blend (multiply or screen depending on base)
