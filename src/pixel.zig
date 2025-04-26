@@ -3,7 +3,7 @@ const fs = std.fs;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
 
-const Pixel = @This();
+pub const Pixel = @This();
 r: u8,
 g: u8,
 b: u8,
