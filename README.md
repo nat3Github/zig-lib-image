@@ -2,6 +2,7 @@
 
 - small image component useful for testing
 - no dependencies
+- zig 0.14.0
 - the library module is also called "image"
 
 # features
