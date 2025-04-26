@@ -11,8 +11,8 @@ pub fn squeze_into_range(val: f32, lower: f32, upper: f32) f32 {
     const dif = upper - lower;
     return val * dif + lower;
 }
-const Pixel = @import("pixel.zig").Pixel;
-const Image = @This();
+pub const Pixel = @import("pixel.zig").Pixel;
+pub const Image = @This();
 const sizeOfPixel = @import("pixel.zig").size_of_pixel();
 offset_x: usize = 0,
 width: usize,
