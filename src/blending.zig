@@ -63,10 +63,10 @@ pub fn blend_premultiplied(
     const out_b = @as(u16, @intCast(src.b)) + ((@as(u16, @intCast(dst.b)) * inv_src_a + 127) / 255);
     const out_a = @as(u16, @intCast(src.a)) + ((@as(u16, @intCast(dst.a)) * inv_src_a + 127) / 255);
     return Pixel{
-        .r = @intCast(out_r),
-        .g = @intCast(out_g),
-        .b = @intCast(out_b),
-        .a = @intCast(out_a),
+        .r = @intCast(@min(out_r, 255)),
+        .g = @intCast(@min(out_g, 255)),
+        .b = @intCast(@min(out_b, 255)),
+        .a = @intCast(@min(out_a, 255)),
     };
 }
 
