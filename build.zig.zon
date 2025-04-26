@@ -1,0 +1,16 @@
+.{
+    .name = .image,
+
+    .version = "0.0.0",
+    .fingerprint = 0xc53d045fa2593a14,
+
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        // For example...
+        //"LICENSE",
+        //"README.md",
+    },
+}
