@@ -134,26 +134,36 @@ test "blend non premultiplied" {
     try expect(Pixel.eql(result2, Pixel.init_rgba(128, 0, 127, 255)));
 }
 
-pub const BlendMode = blend_mode_auto();
-
-const Type = std.builtin.Type;
-pub fn blend_mode_auto() type {
-    const decls = @typeInfo(blend_mode_fn).@"struct".decls;
-    comptime var fields: [decls.len]Type.EnumField = undefined;
-    inline for (decls, &fields, 0..) |d, *f, i| {
-        f.* = Type.EnumField{
-            .name = d.name,
-            .value = i,
-        };
-    }
-    const en: Type = .{ .@"enum" = Type.Enum{
-        .fields = &fields,
-        .tag_type = u8,
-        .is_exhaustive = true,
-        .decls = &.{},
-    } };
-    return @Type(en);
-}
+pub const BlendMode = enum {
+    /// Normal blend (top pixel simply overrides bottom pixel)
+    override,
+    /// Darken blend (takes the darker pixel per channel)
+    darken,
+    /// Lighten blend (takes the lighter pixel per channel)
+    lighten,
+    /// Screen blend (inverse multiply for brighter look)
+    screen,
+    /// Linear Burn blend (adds base and blend and subtracts 1.0)
+    linear_burn,
+    /// Color Burn blend (darkens bottom depending on blend)
+    color_burn,
+    /// Multiply blend (multiplies base and blend channels)
+    multiply,
+    /// Color Dodge blend (brightens based on blend color)
+    color_dodge,
+    /// Linear Dodge (Add) blend (simply adds pixel values)
+    liner_dodge,
+    /// Overlay blend (multiply or screen depending on base)
+    blend_overlay,
+    /// Soft Light blend (gentle contrast depending on blend)
+    soft_light,
+    /// Hard Light blend (overlay but driven by blend)
+    hard_light,
+    /// Difference blend (absolute difference between pixels)
+    difference,
+    /// Exclusion blend (lower contrast difference)
+    exclusion,
+};
 
 pub const blend_mode_fn = struct {
     /// Normal blend (top pixel simply overrides bottom pixel)
