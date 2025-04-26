@@ -198,8 +198,3 @@ pub fn size_of_pixel() comptime_int {
     if (comptime @sizeOf(Pixel) != 4) @compileError("size of extern struct Pixel with 4 u8 is expected to be 4");
     return 4;
 }
-test "test all" {
-    _ = .{
-        Blending,
-    };
-}

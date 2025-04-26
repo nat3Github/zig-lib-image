@@ -195,6 +195,7 @@ test "test img" {
 
 test "test all" {
     _ = .{
-        // Pixel,
+        Pixel,
+        Blending,
     };
 }
