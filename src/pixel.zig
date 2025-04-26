@@ -143,7 +143,7 @@ test "test Pixel" {
     const white_from_hsl = Pixel.init_hsv_slice(&white_to_hsl);
     try expect(meta_eql(Pixel.White, white_from_hsl));
 }
-fn size_of_pixel() comptime_int {
+pub fn size_of_pixel() comptime_int {
     if (comptime @sizeOf(@This()) != 4) @compileError("size of extern struct Pixel with 4 u8 is expected to be 4");
     return 4;
 }
