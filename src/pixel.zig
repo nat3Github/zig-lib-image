@@ -102,13 +102,13 @@ pub const Pixel = extern struct {
         const bw: u8 = @intFromFloat(normalized * 255.0);
         return bw;
     }
-    fn to_gray_pixel(Self: Pixel) Pixel {
-        const bw = to_bw(Self.to_rgb_tuple(), 1);
+    pub fn to_gray_pixel(self: *const Pixel) Pixel {
+        const bw = to_bw(self.to_rgb_tuple(), 1);
         return Pixel{
             .r = bw,
             .g = bw,
             .b = bw,
-            .a = Self.a,
+            .a = self.a,
         };
     }
 
