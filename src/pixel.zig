@@ -24,6 +24,10 @@ pub const Pixel = extern struct {
         if (rgba.len == 4) pixel.a = rgba[3];
         return pixel;
     }
+    pub fn init_from_rgb_tuple(rgb: struct { u8, u8, u8 }) Pixel {
+        const r, const g, const b = rgb;
+        return Pixel{ .r = r, .g = g, .b = b, .a = 255 };
+    }
     pub fn init_from_rgba_tuple(rgba: struct { u8, u8, u8, u8 }) Pixel {
         const r, const g, const b, const a = rgba;
         return Pixel{ .r = r, .g = g, .b = b, .a = a };
