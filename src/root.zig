@@ -90,6 +90,7 @@ pub fn write_ppm_to_file(self: *Image, sub_path: []const u8) !void {
     var file = try fs.cwd().createFile(sub_path, .{});
     var buf = std.io.bufferedWriter(file.writer());
     try self.export_ppm(buf.writer());
+    try buf.flush();
     file.close();
 }
 pub fn from_ppm_P3(alloc: Allocator, file: std.fs.File) !@This() {
