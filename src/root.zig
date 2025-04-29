@@ -76,7 +76,7 @@ pub fn set_background_pixels(self: *Image, pixel: Pixel) void {
         }
     }
 }
-
+/// NOTE: will be extremly slow when using unbuffered writers!
 pub fn export_ppm(self: *Image, writer: anytype) !void {
     try writer.print("P3\n{d} {d}\n255\n", .{ self.width, self.height });
     for (0..self.height) |y| {
