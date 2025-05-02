@@ -26,6 +26,39 @@ pub const Pixel = extern struct {
     pub fn init_rgb(r: u8, g: u8, b: u8) Pixel {
         return .init_from_rgb_tuple(.{ r, g, b });
     }
+    pub fn from_hex(comptime hex: []const u8) Pixel {
+        const xrgba = comptime hexToRgb(hex) catch {
+            @compileError("failed to convert rgba from hex code");
+        };
+        return Pixel.init_from_u8_slice(&xrgba);
+    }
+    pub fn convert_hex(hex: []const u8) !Pixel {
+        const xrgba = try hexToRgb(hex);
+        return Pixel.init_from_u8_slice(&xrgba);
+    }
+    pub inline fn hexToRgb(hex: []const u8) ![4]u8 {
+        var xrgba: [4]u8 = .{ 0, 0, 0, 255 };
+        if (hex.len == 6) {
+            for (xrgba[0..3], 0..) |_, i| {
+                const start = i * 2;
+                const slice = hex[start .. start + 2];
+                const value = try std.fmt.parseInt(u8, slice, 16);
+                xrgba[i] = value;
+            }
+            return xrgba;
+        }
+        if (hex.len == 7 and hex[0] == '#') {
+            const hex1 = hex[1..];
+            for (xrgba[0..3], 0..) |_, i| {
+                const start = i * 2;
+                const slice = hex1[start .. start + 2];
+                const value = try std.fmt.parseInt(u8, slice, 16);
+                xrgba[i] = value;
+            }
+            return xrgba;
+        }
+        return error.FailedToParseHexColor;
+    }
     pub fn eql(a: Pixel, b: Pixel) bool {
         return std.mem.eql(u8, &a.to_rgba_arr(), &b.to_rgba_arr());
     }
