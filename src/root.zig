@@ -38,6 +38,9 @@ pub fn get_width(self: *const Image) usize {
 pub fn get_height(img: *const Image) usize {
     return (img._row_major_px.len / sizeOfPixel) / img.__static_width;
 }
+pub fn get_pixel_data(img: *const Image) []const u8 {
+    return img._row_major_px;
+}
 
 pub fn deinit(self: *Image, alloc: Allocator) void {
     alloc.free(self._row_major_px);
