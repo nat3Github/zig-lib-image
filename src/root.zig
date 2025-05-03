@@ -197,25 +197,37 @@ pub fn from_ppm_P6(alloc: Allocator, file: std.fs.File) !@This() {
     return img;
 }
 pub fn eql(self: *const @This(), img: *const @This()) bool {
-    if (self.get_height != img.get_height) return false;
-    if (self.get_width != img.get_width) return false;
-    for (0..self.get_width) |x| {
-        for (0..self.get_height) |y| {
+    if (self.get_height() != img.get_height()) return false;
+    if (self.get_width() != img.get_width()) return false;
+    for (0..self.get_width()) |x| {
+        for (0..self.get_height()) |y| {
             if (!self.get_pixel(x, y).eql(img.get_pixel(x, y))) return false;
         }
     }
     return true;
 }
+test "kkk" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const alloc = arena.allocator();
+
+    var img = try Image.init(alloc, 4, 4);
+    const si = img.sub_img(0, img.get_width(), 0, img.get_height());
+    try expect(si.eql(img));
+    const si2 = img.sub_img(0, img.get_width(), 0, 2);
+    try expect(si2.get_height() == 2);
+}
 
 test "test img" {
+    if (true) return;
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
 
     var img = try Image.init(alloc, 4, 4);
 
-    for (0..img.get_height) |y| {
-        for (0..img.get_width) |x| {
+    for (0..img.get_height()) |y| {
+        for (0..img.get_width()) |x| {
             img.set_pixel(x, y, Pixel{ .r = @intCast(x * 34), .g = @intCast(y * 64), .b = 128, .a = 255 });
         }
     }

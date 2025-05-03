@@ -264,14 +264,14 @@ test "test generate test images" {
     const img1 = try Image.from_ppm_P6(alloc, winter);
     const img2 = try Image.from_ppm_P6(alloc, goose);
 
-    const mwidth = @min(img1.width, img2.width);
-    const mheight = @min(img1.height, img2.height);
+    const mwidth = @min(img1.get_width(), img2.get_width());
+    const mheight = @min(img1.get_height(), img2.get_height());
     var img = try Image.init(alloc, mwidth, mheight);
     inline for (@typeInfo(BlendMode).@"enum".fields, 0..) |_, i| {
         const bm: BlendMode = @enumFromInt(i);
         const am: AlphaCompositing = .non_premultiplied;
-        for (0..img.height) |y| {
-            for (0..img.width) |x| {
+        for (0..img.get_height()) |y| {
+            for (0..img.get_width()) |x| {
                 const px1 = img1.get_pixel(x, y);
                 const px2 = img2.get_pixel(x, y);
                 const px = blend(px1, px2, bm, am);
