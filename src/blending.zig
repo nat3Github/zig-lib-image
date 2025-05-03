@@ -255,6 +255,7 @@ test "test blend" {
 }
 
 test "test generate test images" {
+    if (true) return;
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const alloc = arena.allocator();

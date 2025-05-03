@@ -20,15 +20,15 @@ pub const Image = @This();
 const sizeOfPixel = @import("pixel.zig").size_of_pixel();
 __intern_offset_x: usize = 0,
 __intern_width: usize,
-__intern_height: usize,
+__static_width: usize,
 _row_major_px: []u8,
 
 pub fn init(allocator: std.mem.Allocator, width: usize, height: usize) !Image {
     assert(height > 0);
     const pixels = try allocator.alloc(u8, width * height * sizeOfPixel);
     return Image{
+        .__static_width = width,
         .__intern_width = width,
-        .__intern_height = height,
         ._row_major_px = pixels,
     };
 }
@@ -36,12 +36,7 @@ pub fn get_width(self: *const Image) usize {
     return self.__intern_width;
 }
 pub fn get_height(img: *const Image) usize {
-    const ogw = img.og_width();
-    return (img._row_major_px.len / sizeOfPixel) / ogw;
-}
-
-pub fn og_width(self: *const Image) usize {
-    return (self._row_major_px.len / sizeOfPixel) / self.__intern_height;
+    return (img._row_major_px.len / sizeOfPixel) / img.__static_width;
 }
 
 pub fn deinit(self: *Image, alloc: Allocator) void {
@@ -56,18 +51,12 @@ pub fn sub_img(
 ) Image {
     assert(img.__intern_offset_x + x_offset + width <= img.get_width());
     assert(y_offset + height <= img.get_height());
-    std.log.warn("img height {}", .{height});
     const ret = Image{
-        .__intern_height = img.__intern_height,
+        .__static_width = img.__static_width,
         .__intern_width = width,
         .__intern_offset_x = img.__intern_offset_x + x_offset,
         ._row_major_px = img.get_y_slice(y_offset, height),
     };
-    assert(img.__intern_height == ret.__intern_height);
-    assert(ret._row_major_px.len < img._row_major_px.len);
-    std.log.warn("img height {}", .{img.get_height()});
-    std.log.warn("img height {}", .{ret.get_height()});
-    assert(ret.get_height() == height);
     return ret;
 }
 fn get_y_slice(
@@ -75,7 +64,7 @@ fn get_y_slice(
     y_offset: usize,
     y_len: usize,
 ) []u8 {
-    return self.get_row_major_pixel_slice(y_offset * self.og_width(), (y_offset + y_len) * self.og_width());
+    return self.get_row_major_pixel_slice(y_offset * self.__static_width, (y_offset + y_len) * self.__static_width);
 }
 fn get_row_major_pixel_slice(self: *Image, start: usize, end: usize) []u8 {
     assert(start <= end);
@@ -84,7 +73,7 @@ fn get_row_major_pixel_slice(self: *Image, start: usize, end: usize) []u8 {
 
 fn px(self: *Image, x: usize, y: usize) *Pixel {
     assert(x < self.get_width() and y < self.get_height());
-    const idx = y * self.og_width() + (x + self.__intern_offset_x);
+    const idx = y * self.__static_width + (x + self.__intern_offset_x);
     const pixelbytes = self._row_major_px[idx * sizeOfPixel .. (idx + 1) * sizeOfPixel];
     const ptr: *Pixel = @alignCast(@ptrCast(pixelbytes.ptr));
     return ptr;
@@ -213,7 +202,7 @@ test "kkk" {
 
     var img = try Image.init(alloc, 4, 4);
     const si = img.sub_img(0, img.get_width(), 0, img.get_height());
-    try expect(si.eql(img));
+    try expect(si.eql(&img));
     const si2 = img.sub_img(0, img.get_width(), 0, 2);
     try expect(si2.get_height() == 2);
 }
