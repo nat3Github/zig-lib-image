@@ -39,13 +39,20 @@ fn og_width(self: *Image) usize {
 pub fn deinit(self: *Image, alloc: Allocator) void {
     alloc.free(self.pixel_data);
 }
-pub fn sub_img(self: *Image, start: usize, len: usize) Image {
-    assert(start + len <= self.width);
+pub fn sub_img(
+    self: *Image,
+    x_offset: usize,
+    width: usize,
+    y_offset: usize,
+    height: usize,
+) Image {
+    assert(x_offset + width <= self.width);
+    assert(y_offset + height <= self.height);
     return Image{
-        .width = len,
         .height = self.height,
-        .offset_x = self.offset_x + start,
-        .pixel_data = self.pixel_data,
+        .width = width,
+        .offset_x = self.offset_x + x_offset,
+        .pixel_data = self.pixel_data[y_offset * self.og_width() .. (y_offset + height) * self.og_width()],
     };
 }
 fn px(self: *Image, x: usize, y: usize) *Pixel {
