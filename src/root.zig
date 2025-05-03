@@ -18,47 +18,74 @@ pub const AlphaCompositing = Blending.AlphaCompositing;
 
 pub const Image = @This();
 const sizeOfPixel = @import("pixel.zig").size_of_pixel();
-offset_x: usize = 0,
-width: usize,
-height: usize,
-pixel_data: []u8,
+__intern_offset_x: usize = 0,
+__intern_width: usize,
+__intern_height: usize,
+_row_major_px: []u8,
 
 pub fn init(allocator: std.mem.Allocator, width: usize, height: usize) !Image {
+    assert(height > 0);
     const pixels = try allocator.alloc(u8, width * height * sizeOfPixel);
     return Image{
-        .width = width,
-        .height = height,
-        .pixel_data = pixels,
+        .__intern_width = width,
+        .__intern_height = height,
+        ._row_major_px = pixels,
     };
 }
+pub fn get_width(self: *const Image) usize {
+    return self.__intern_width;
+}
+pub fn get_height(img: *const Image) usize {
+    const ogw = img.og_width();
+    return (img._row_major_px.len / sizeOfPixel) / ogw;
+}
 
-fn og_width(self: *Image) usize {
-    return (self.pixel_data.len / sizeOfPixel) / self.height;
+pub fn og_width(self: *const Image) usize {
+    return (self._row_major_px.len / sizeOfPixel) / self.__intern_height;
 }
 
 pub fn deinit(self: *Image, alloc: Allocator) void {
-    alloc.free(self.pixel_data);
+    alloc.free(self._row_major_px);
 }
 pub fn sub_img(
-    self: *Image,
+    img: *Image,
     x_offset: usize,
     width: usize,
     y_offset: usize,
     height: usize,
 ) Image {
-    assert(x_offset + width <= self.width);
-    assert(y_offset + height <= self.height);
-    return Image{
-        .height = self.height,
-        .width = width,
-        .offset_x = self.offset_x + x_offset,
-        .pixel_data = self.pixel_data[y_offset * self.og_width() .. (y_offset + height) * self.og_width()],
+    assert(img.__intern_offset_x + x_offset + width <= img.get_width());
+    assert(y_offset + height <= img.get_height());
+    std.log.warn("img height {}", .{height});
+    const ret = Image{
+        .__intern_height = img.__intern_height,
+        .__intern_width = width,
+        .__intern_offset_x = img.__intern_offset_x + x_offset,
+        ._row_major_px = img.get_y_slice(y_offset, height),
     };
+    assert(img.__intern_height == ret.__intern_height);
+    assert(ret._row_major_px.len < img._row_major_px.len);
+    std.log.warn("img height {}", .{img.get_height()});
+    std.log.warn("img height {}", .{ret.get_height()});
+    assert(ret.get_height() == height);
+    return ret;
 }
+fn get_y_slice(
+    self: *Image,
+    y_offset: usize,
+    y_len: usize,
+) []u8 {
+    return self.get_row_major_pixel_slice(y_offset * self.og_width(), (y_offset + y_len) * self.og_width());
+}
+fn get_row_major_pixel_slice(self: *Image, start: usize, end: usize) []u8 {
+    assert(start <= end);
+    return self._row_major_px[start * sizeOfPixel .. end * sizeOfPixel];
+}
+
 fn px(self: *Image, x: usize, y: usize) *Pixel {
-    assert(x < self.width and y < self.height);
-    const idx = y * self.og_width() + (x + self.offset_x);
-    const pixelbytes = self.pixel_data[idx * sizeOfPixel .. (idx + 1) * sizeOfPixel];
+    assert(x < self.get_width() and y < self.get_height());
+    const idx = y * self.og_width() + (x + self.__intern_offset_x);
+    const pixelbytes = self._row_major_px[idx * sizeOfPixel .. (idx + 1) * sizeOfPixel];
     const ptr: *Pixel = @alignCast(@ptrCast(pixelbytes.ptr));
     return ptr;
 }
@@ -69,25 +96,25 @@ pub fn get_pixel(self: *const Image, x: usize, y: usize) Pixel {
     return px(@constCast(self), x, y).*;
 }
 pub fn set_column(self: *Image, x: usize, y_0: usize, y_len: usize, pixel: Pixel) void {
-    assert(x < self.width);
-    assert(y_0 + y_len < self.height);
+    assert(x < self.get_width);
+    assert(y_0 + y_len < self.get_height);
     for (0..y_len) |i| {
         self.set_pixel(x, y_0 + i, pixel);
     }
 }
 
 pub fn set_background_pixels(self: *Image, pixel: Pixel) void {
-    for (0..self.height) |y| {
-        for (0..self.width) |x| {
+    for (0..self.get_height) |y| {
+        for (0..self.get_width) |x| {
             self.set_pixel(x, y, pixel);
         }
     }
 }
 /// NOTE: will be extremly slow when using unbuffered writers!
 pub fn export_ppm(self: *Image, writer: anytype) !void {
-    try writer.print("P3\n{d} {d}\n255\n", .{ self.width, self.height });
-    for (0..self.height) |y| {
-        for (self.offset_x..self.offset_x + self.width) |x| {
+    try writer.print("P3\n{d} {d}\n255\n", .{ self.get_width(), self.get_height() });
+    for (0..self.get_height()) |y| {
+        for (0..self.get_width()) |x| {
             const p = self.get_pixel(x, y);
             try writer.print("{d} {d} {d}\n", .{ p.r, p.g, p.b });
         }
@@ -170,10 +197,10 @@ pub fn from_ppm_P6(alloc: Allocator, file: std.fs.File) !@This() {
     return img;
 }
 pub fn eql(self: *const @This(), img: *const @This()) bool {
-    if (self.height != img.height) return false;
-    if (self.width != img.width) return false;
-    for (0..self.width) |x| {
-        for (0..self.height) |y| {
+    if (self.get_height != img.get_height) return false;
+    if (self.get_width != img.get_width) return false;
+    for (0..self.get_width) |x| {
+        for (0..self.get_height) |y| {
             if (!self.get_pixel(x, y).eql(img.get_pixel(x, y))) return false;
         }
     }
@@ -187,8 +214,8 @@ test "test img" {
 
     var img = try Image.init(alloc, 4, 4);
 
-    for (0..img.height) |y| {
-        for (0..img.width) |x| {
+    for (0..img.get_height) |y| {
+        for (0..img.get_width) |x| {
             img.set_pixel(x, y, Pixel{ .r = @intCast(x * 34), .g = @intCast(y * 64), .b = 128, .a = 255 });
         }
     }
