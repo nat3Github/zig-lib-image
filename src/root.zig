@@ -3,6 +3,7 @@ const fs = std.fs;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
 const Allocator = std.mem.Allocator;
+pub const draw = @import("drawing2.zig");
 
 pub fn squeze_into_range(val: f32, lower: f32, upper: f32) f32 {
     assert(val <= 1);
@@ -22,6 +23,7 @@ __intern_offset_x: usize = 0,
 __intern_width: usize,
 __static_width: usize,
 _row_major_px: []u8,
+__alloc: ?Allocator = null,
 
 pub fn init(allocator: std.mem.Allocator, width: usize, height: usize) !Image {
     assert(height > 0);
@@ -30,7 +32,16 @@ pub fn init(allocator: std.mem.Allocator, width: usize, height: usize) !Image {
         .__static_width = width,
         .__intern_width = width,
         ._row_major_px = pixels,
+        .__alloc = allocator,
     };
+}
+/// NOTE: dont call resize on subimages
+pub fn resize(self: *Image, width: usize, height: usize) !void {
+    if (self.get_height() == height and self.get_width() == width) return;
+    self._row_major_px = try self.__alloc.?.realloc(self._row_major_px, width * height * sizeOfPixel);
+    self.__static_width = width;
+    self.__intern_width = width;
+    self.__intern_offset_x = 0;
 }
 pub fn get_width(self: *const Image) usize {
     return self.__intern_width;
@@ -42,9 +53,12 @@ pub fn get_pixel_data(img: *const Image) []const u8 {
     return img._row_major_px;
 }
 
-pub fn deinit(self: *Image, alloc: Allocator) void {
+pub fn deinit(self: *Image) void {
+    const alloc = self.__alloc.?;
     alloc.free(self._row_major_px);
 }
+/// NOTE: the Image return is a reference to the original Image, you can mutate it but the memory is owned by the original image, its just a "view" into an Image
+/// so dont resize the Image!
 pub fn sub_img(
     img: *Image,
     x_offset: usize,
@@ -59,6 +73,7 @@ pub fn sub_img(
         .__intern_width = width,
         .__intern_offset_x = img.__intern_offset_x + x_offset,
         ._row_major_px = img.get_y_slice(y_offset, height),
+        .__alloc = null,
     };
     return ret;
 }
@@ -96,8 +111,8 @@ pub fn set_column(self: *Image, x: usize, y_0: usize, y_len: usize, pixel: Pixel
 }
 
 pub fn set_background_pixels(self: *Image, pixel: Pixel) void {
-    for (0..self.get_height) |y| {
-        for (0..self.get_width) |x| {
+    for (0..self.get_height()) |y| {
+        for (0..self.get_width()) |x| {
             self.set_pixel(x, y, pixel);
         }
     }
@@ -237,5 +252,6 @@ test "test all" {
     _ = .{
         Pixel,
         Blending,
+        draw,
     };
 }
