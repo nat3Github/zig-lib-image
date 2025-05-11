@@ -19,6 +19,7 @@ pub const Pixel = extern struct {
     pub const Red = init_rgb(255, 0, 0);
     pub const Green = init_rgb(0, 255, 0);
     pub const Blue = init_rgb(0, 0, 255);
+    pub const Magenta = init_rgb(255, 0, 255);
 
     pub fn init_rgba(r: u8, g: u8, b: u8, a: u8) Pixel {
         return .init_from_rgba_tuple(.{ r, g, b, a });

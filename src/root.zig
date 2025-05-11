@@ -123,7 +123,23 @@ pub fn export_ppm(self: *Image, writer: anytype) !void {
     for (0..self.get_height()) |y| {
         for (0..self.get_width()) |x| {
             const p = self.get_pixel(x, y);
-            try writer.print("{d} {d} {d}\n", .{ p.r, p.g, p.b });
+            const grid = 30;
+
+            var alphaPixel = Pixel.Magenta;
+            if (((x / grid) % 2 == 0 and (y / grid) % 2 == 0) or
+                ((x / grid) % 2 == 1 and (y / grid) % 2 == 1))
+            {
+                alphaPixel = Pixel.White;
+            } else {
+                alphaPixel = Pixel.Magenta;
+            }
+
+            const blend = alphaPixel.blend(p, BlendMode.override, AlphaCompositing.premultiplied);
+            try writer.print("{d} {d} {d}\n", .{
+                blend.r,
+                blend.g,
+                blend.b,
+            });
         }
     }
 }
